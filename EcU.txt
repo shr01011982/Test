@@ -1,0 +1,136 @@
+ECU Component Update
+⦿ Screen to update the status (YES / NO) of the various functionalities of the ECU components.
+
+
+ChatGPT said:
+Here's how you can implement the ECU Component Update screen as part of a Spring Boot + Reactive (Flux) microservice application, assuming you want this as one of the microservices in your system.
+
+✅ Microservice: ecu-component-service
+🎯 Functionality
+Allow users (Admin or Engineers) to view and update ECU component statuses (YES/NO) via a simple API and UI.
+
+📘 MongoDB Document Structure
+json
+Copy
+Edit
+{
+  "id": "component123",
+  "componentName": "Fuel Injection Control",
+  "status": "YES",
+  "lastUpdated": "2025-05-29T07:00:00Z"
+}
+📦 API Endpoints
+1. GET /api/ecu-components
+🔹 Description: Fetch all ECU components and their current status.
+🔹 Return: Flux of components.
+
+2. PUT /api/ecu-components/{id}
+🔹 Description: Update status of a component by ID.
+🔹 Payload:
+
+json
+Copy
+Edit
+{
+  "status": "NO"
+}
+🧠 Spring Boot + Flux Backend Example
+📁 EcuComponent.java
+java
+Copy
+Edit
+@Document(collection = "ecu_components")
+public class EcuComponent {
+    @Id
+    private String id;
+    private String componentName;
+    private String status; // YES or NO
+    private Instant lastUpdated;
+}
+📁 EcuComponentRepository.java
+java
+Copy
+Edit
+public interface EcuComponentRepository extends ReactiveMongoRepository<EcuComponent, String> {
+}
+📁 EcuComponentController.java
+java
+Copy
+Edit
+@RestController
+@RequestMapping("/api/ecu-components")
+@RequiredArgsConstructor
+public class EcuComponentController {
+
+    private final EcuComponentRepository repository;
+
+    @GetMapping
+    public Flux<EcuComponent> getAllComponents() {
+        return repository.findAll();
+    }
+
+    @PutMapping("/{id}")
+    public Mono<ResponseEntity<EcuComponent>> updateStatus(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+
+        return repository.findById(id)
+                .flatMap(component -> {
+                    component.setStatus(status);
+                    component.setLastUpdated(Instant.now());
+                    return repository.save(component);
+                })
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+}
+🌐 Frontend (Angular or React)
+Use a simple table/grid layout.
+
+Provide a dropdown or toggle (YES/NO) next to each component row.
+
+On change, call the PUT API to update status.
+
+🐳 Docker Compose (Mongo + Service)
+yaml
+Copy
+Edit
+version: '3'
+services:
+  ecu-mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  ecu-service:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ecu-mongo:27017/ecu_db
+
+volumes:
+  mongo_data:
+Would you like:
+
+🧪 Unit tests for controller & repository?
+
+🧑‍💻 React frontend code for the toggle-based UI?
+
+📦 Full GitHub structure (with Dockerfile, application.yml, etc.)?
+
+Let me know how you'd like to extend this.
+
+
+
+
+
+
+
+
+Tools
+
+

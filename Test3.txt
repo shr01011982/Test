@@ -1,0 +1,70 @@
+ Tech Stack
+Backend: Spring Boot + Spring WebFlux (Reactive)
+
+Database: MongoDB (NoSQL for flexibility)
+
+Security: JWT-based authentication
+
+Frontend: Angular or React (Optional)
+
+API Gateway: Spring Cloud Gateway
+
+Service Discovery: Eureka
+
+Deployment: Docker + Kubernetes or Docker Compose
+
+Others: Lombok, ModelMapper, JUnit, WebClient, Swagger/OpenAPI
+
+
+Key Modules and Microservices
+1. Authentication Service
+Login (JWT token)
+
+User roles: Admin, Engineer, Manager
+
+Spring Security + WebFlux
+
+2. Project Management Service
+Create/Edit/Delete Projects
+
+Assign ECUs and teams
+
+Project status tracking (In Progress, Completed, Archived)
+
+3. ECU Component Management
+List of ECUs per project
+
+Component functionality (YES/NO toggle)
+
+Reactive updates and status tracking
+
+4. Diagnostic Rule Management
+Define diagnostic rules per component
+
+Create/Edit/Delete rule sets
+
+Upload diagnostic scripts (optional)
+
+5. Micro-Activity Service
+Manage micro-tasks within a project
+
+Rule assignment and completion tracking
+
+6. Reporting Service
+Generate real-time reports:
+
+Overall project status
+
+ECU-specific diagnostics
+
+Historical diagnostic test outcomes
+
+7. Import/Export Service
+Import project/ECU definitions from Excel or CSV
+
+Export reports as Excel or PDF
+
+8. Dashboard Service
+Reactive charts (Flux + Mongo)
+
+Project health summary, pie/bar graphs

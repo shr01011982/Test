@@ -1,0 +1,106 @@
+admin-role-service:
+Permission Entity
+
+@Data
+@Document(collection = "permissions")
+public class Permission {
+    @Id
+    private String id;
+    private String name; // e.g., "CREATE_PROGRAM", "DELETE_USER"
+}
+
+
+Role Entity
+
+@Data
+@Document(collection = "roles")
+public class Role {
+    @Id
+    private String id;
+    private String name; // e.g., "Super Admin", "PDM"
+    private List<String> permissionIds;
+}
+
+
+public interface RoleRepository extends ReactiveMongoRepository<Role, String> {}
+public interface PermissionRepository extends ReactiveMongoRepository<Permission, String> {}
+
+
+@Service
+public class RoleService {
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
+
+    public Mono<Role> createRole(Role role) {
+        return roleRepository.save(role);
+    }
+
+    public Mono<Role> updateRole(String id, Role updatedRole) {
+        return roleRepository.findById(id)
+            .flatMap(existing -> {
+                existing.setName(updatedRole.getName());
+                existing.setPermissionIds(updatedRole.getPermissionIds());
+                return roleRepository.save(existing);
+            });
+    }
+
+    public Mono<Void> deleteRole(String id) {
+        return roleRepository.deleteById(id);
+    }
+
+    public Flux<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
+
+    public Flux<Permission> getAllPermissions() {
+        return permissionRepository.findAll();
+    }
+
+    public Mono<Permission> createPermission(Permission permission) {
+        return permissionRepository.save(permission);
+    }
+}
+
+
+
+@RestController
+@RequestMapping("/admin/roles")
+public class RoleController {
+
+    @Autowired
+    private RoleService roleService;
+
+    @PostMapping
+    public Mono<Role> createRole(@RequestBody Role role) {
+        return roleService.createRole(role);
+    }
+
+    @PutMapping("/{id}")
+    public Mono<Role> updateRole(@PathVariable String id, @RequestBody Role role) {
+        return roleService.updateRole(id, role);
+    }
+
+    @DeleteMapping("/{id}")
+    public Mono<Void> deleteRole(@PathVariable String id) {
+        return roleService.deleteRole(id);
+    }
+
+    @GetMapping
+    public Flux<Role> listRoles() {
+        return roleService.getAllRoles();
+    }
+
+    @GetMapping("/permissions")
+    public Flux<Permission> listPermissions() {
+        return roleService.getAllPermissions();
+    }
+
+    @PostMapping("/permissions")
+    public Mono<Permission> createPermission(@RequestBody Permission permission) {
+        return roleService.createPermission(permission);
+    }
+}

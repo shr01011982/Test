@@ -1,0 +1,108 @@
+Admin Functionality
+User Management
+⦿ Create, edit, and delete users.
+⦿ Assign roles and permissions to users.
+
+
+Microservice: admin-user-service
+Entities
+@Data
+@Document(collection = "users")
+public class User {
+    @Id
+    private String id;
+    private String username;
+    private String email;
+    private String password;
+    private List<String> roles;
+}
+
+Repository
+
+public interface UserRepository extends ReactiveMongoRepository<User, String> {
+    Mono<User> findByUsername(String username);
+}
+
+
+Service Layer
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public Mono<User> createUser(User user) {
+        return userRepository.save(user);
+    }
+
+    public Mono<User> updateUser(String id, User updatedUser) {
+        return userRepository.findById(id)
+            .flatMap(existing -> {
+                existing.setUsername(updatedUser.getUsername());
+                existing.setEmail(updatedUser.getEmail());
+                existing.setRoles(updatedUser.getRoles());
+                return userRepository.save(existing);
+            });
+    }
+
+    public Mono<Void> deleteUser(String id) {
+        return userRepository.deleteById(id);
+    }
+
+    public Flux<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public Mono<User> assignRoles(String id, List<String> roles) {
+        return userRepository.findById(id)
+            .flatMap(user -> {
+                user.setRoles(roles);
+                return userRepository.save(user);
+            });
+    }
+}
+
+Controller Layer
+@RestController
+@RequestMapping("/admin/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping
+    public Mono<User> createUser(@RequestBody User user) {
+        return userService.createUser(user);
+    }
+
+    @PutMapping("/{id}")
+    public Mono<User> updateUser(@PathVariable String id, @RequestBody User user) {
+        return userService.updateUser(id, user);
+    }
+
+    @DeleteMapping("/{id}")
+    public Mono<Void> deleteUser(@PathVariable String id) {
+        return userService.deleteUser(id);
+    }
+
+    @GetMapping
+    public Flux<User> listUsers() {
+        return userService.getAllUsers();
+    }
+
+    @PatchMapping("/{id}/roles")
+    public Mono<User> assignRoles(@PathVariable String id, @RequestBody List<String> roles) {
+        return userService.assignRoles(id, roles);
+    }
+}
+
+MongoDB Collection (users) Example
+{
+  "_id": "user123",
+  "username": "adminuser",
+  "email": "admin@example.com",
+  "password": "hashedpassword",
+  "roles": ["ADMIN", "USER_MANAGE"]
+}
+

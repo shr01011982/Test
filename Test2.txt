@@ -1,0 +1,260 @@
+// === MICROSERVICE: authentication-service ===
+// Handles user authentication and JWT
+
+// === Controller ===
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/login")
+    public Mono<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
+        return authService.authenticate(loginRequest);
+    }
+
+    @PostMapping("/register")
+    public Mono<User> register(@RequestBody @Valid User user) {
+        return authService.register(user);
+    }
+}
+
+// === Service ===
+@Service
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+
+    public AuthService(UserRepository userRepository, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+    }
+
+    public Mono<TokenResponse> authenticate(LoginRequest loginRequest) {
+        return userRepository.findByUsername(loginRequest.getUsername())
+                .filter(user -> user.getPassword().equals(loginRequest.getPassword()))
+                .map(user -> new TokenResponse(jwtUtil.generateToken(user)));
+    }
+
+    public Mono<User> register(User user) {
+        return userRepository.save(user);
+    }
+}
+
+// === Repository ===
+@Repository
+public interface UserRepository extends ReactiveMongoRepository<User, String> {
+    Mono<User> findByUsername(String username);
+}
+
+// === Models ===
+public class LoginRequest {
+    private String username;
+    private String password;
+    // getters and setters
+}
+
+public class TokenResponse {
+    private String token;
+    public TokenResponse(String token) { this.token = token; }
+    // getter
+}
+
+@Document
+public class User {
+    @Id
+    private String id;
+    private String username;
+    private String password;
+    private List<String> roles;
+    // getters and setters
+}
+
+// === JWT Utility ===
+@Component
+public class JwtUtil {
+    private final String SECRET = "secret-key";
+
+    public String generateToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("roles", user.getRoles())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 864_000_00))
+                .signWith(SignatureAlgorithm.HS256, SECRET)
+                .compact();
+    }
+}
+}
+
+// === MICROSERVICE: project-service ===
+// Manages creation and lifecycle of diagnostic projects
+
+// === Controller ===
+@RestController
+@RequestMapping("/projects")
+public class ProjectController {
+
+    private final ProjectService projectService;
+
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
+    }
+
+    @PostMapping
+    public Mono<Project> createProject(@RequestBody @Valid ProjectRequest request) {
+        return projectService.createProject(request);
+    }
+
+    @GetMapping("/{id}")
+    public Mono<Project> getProject(@PathVariable String id) {
+        return projectService.getProjectById(id);
+    }
+
+    @PutMapping("/{id}")
+    public Mono<Project> updateProject(@PathVariable String id, @RequestBody ProjectRequest request) {
+        return projectService.updateProject(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public Mono<Void> deleteProject(@PathVariable String id) {
+        return projectService.deleteProject(id);
+    }
+}
+
+// === Service ===
+@Service
+public class ProjectService {
+
+    private final ProjectRepository projectRepository;
+
+    public ProjectService(ProjectRepository projectRepository) {
+        this.projectRepository = projectRepository;
+    }
+
+    public Mono<Project> createProject(ProjectRequest request) {
+        Project project = new Project(null, request.getName(), request.getDescription(), "IN_PROGRESS", LocalDateTime.now());
+        return projectRepository.save(project);
+    }
+
+    public Mono<Project> getProjectById(String id) {
+        return projectRepository.findById(id);
+    }
+
+    public Mono<Project> updateProject(String id, ProjectRequest request) {
+        return projectRepository.findById(id)
+                .flatMap(existing -> {
+                    existing.setName(request.getName());
+                    existing.setDescription(request.getDescription());
+                    return projectRepository.save(existing);
+                });
+    }
+
+    public Mono<Void> deleteProject(String id) {
+        return projectRepository.deleteById(id);
+    }
+}
+
+// === Repository ===
+@Repository
+public interface ProjectRepository extends ReactiveMongoRepository<Project, String> {
+}
+
+// === Models ===
+public class ProjectRequest {
+    private String name;
+    private String description;
+    // getters and setters
+}
+
+@Document
+public class Project {
+    @Id
+    private String id;
+    private String name;
+    private String description;
+    private String status;
+    private LocalDateTime createdDate;
+
+    public Project(String id, String name, String description, String status, LocalDateTime createdDate) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.status = status;
+        this.createdDate = createdDate;
+    }
+    // getters and setters
+}
+
+// === MICROSERVICE: ecu-service ===
+// Responsible for managing ECU component data and status
+@RestController
+@RequestMapping("/ecus")
+public class ECUController {
+
+    @PostMapping
+    public Mono<ECU> createECU(@RequestBody ECURequest request) {
+        return ecuService.createECU(request);
+    }
+
+    @PutMapping("/{id}/status")
+    public Mono<ECU> updateECUStatus(@PathVariable String id, @RequestParam boolean status) {
+        return ecuService.updateStatus(id, status);
+    }
+}
+
+// === MICROSERVICE: diagnostic-rule-service ===
+// Manages diagnostic rule definitions linked to ECUs
+@RestController
+@RequestMapping("/diagnostic-rules")
+public class DiagnosticRuleController {
+
+    @PostMapping
+    public Mono<DiagnosticRule> createRule(@RequestBody RuleRequest request) {
+        return ruleService.createRule(request);
+    }
+
+    @GetMapping("/ecu/{ecuId}")
+    public Flux<DiagnosticRule> getRulesByECU(@PathVariable String ecuId) {
+        return ruleService.getRulesByECU(ecuId);
+    }
+}
+
+// === MICROSERVICE: micro-activity-service ===
+// Handles small tasks and workflows related to ECU diagnostics
+@RestController
+@RequestMapping("/micro-activities")
+public class MicroActivityController {
+
+    @PostMapping
+    public Mono<MicroActivity> createActivity(@RequestBody ActivityRequest request) {
+        return activityService.createActivity(request);
+    }
+
+    @PutMapping("/{id}")
+    public Mono<MicroActivity> updateActivity(@PathVariable String id, @RequestBody ActivityRequest request) {
+        return activityService.updateActivity(id, request);
+    }
+}
+
+// === MICROSERVICE: reporting-service ===
+// Generates and exposes reports about project and ECU diagnostics
+@RestController
+@RequestMapping("/reports")
+public class ReportController {
+
+    @GetMapping("/project-status")
+    public Flux<ProjectStatusReport> getAllProjectStatus() {
+        return reportService.generateProjectStatusReport();
+    }
+
+    @GetMapping("/ecu-status/{projectId}")
+    public Flux<ECUStatusReport> getECUStatusReport(@PathVariable String projectId) {
+        return reportService.generateECUStatusReport(projectId);
+    }
+}
