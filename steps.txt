@@ -1,0 +1,13 @@
+openapi-generator-cli generate -i admin-api.yaml -g spring -o spring-server --additional-properties=useSpringBoot3=true,java17=true,interfaceOnly=false,buildTool=maven
+
+cd spring-server
+./mvnw spring-boot:run
+
+
+http://localhost:8080/swagger-ui.html
+
+
+openapi-generator-cli generate -i admin-api.yaml -g java -o java-client --additional-properties=library=resttemplate
+
+
+openapi-generator-cli generate -i admin-api.yml -g spring -o Admini-server --additional-properties=useSpringBoot3=true,java21=true,interfaceOnly=false,buildTool=maven,basePackage=com.stellants.vpmt,apiPackage=com.stellants.vpmt.controller,modelPackage=com.stellants.vpmt.model,configPackage=com.stellants.vpmt.security,invokerPackage=com.stellants.vpmt.service,artifactId=admin-functionality-service,artifactVersion=1.0.0,applicationName=AdminFunctionalityApplication

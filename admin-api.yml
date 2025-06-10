@@ -1,0 +1,331 @@
+openapi: 3.0.3
+info:
+  title: Admin Functionality API
+  version: 1.0.0
+  description: API documentation for Admin functionalities like User, Role, Permission, Program Type, Region, etc.
+servers:
+  - url: http://localhost:8080/api
+    description: Local Dev Server
+
+tags:
+  - name: User Management
+  - name: Role Management
+  - name: Permission Management
+  - name: Program Type Management
+  - name: Stellantis Regions Management
+  - name: Activity Management
+  - name: Template Management
+  - name: RYG Rule Management
+
+paths:
+  /users:
+    get:
+      tags: [User Management]
+      summary: Get all users
+      responses:
+        '200':
+          description: List of users
+    post:
+      tags: [User Management]
+      summary: Create a new user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created
+
+  /users/{userId}:
+    put:
+      tags: [User Management]
+      summary: Edit user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated
+
+    delete:
+      tags: [User Management]
+      summary: Delete user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+
+  /roles:
+    get:
+      tags: [Role Management]
+      summary: Get all roles
+      responses:
+        '200':
+          description: List of roles
+    post:
+      tags: [Role Management]
+      summary: Create a new role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '201':
+          description: Role created
+
+  /roles/{roleId}/permissions:
+    post:
+      tags: [Role Management]
+      summary: Map permissions to role
+      parameters:
+        - in: path
+          name: roleId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        '200':
+          description: Permissions mapped to role
+
+  /permissions:
+    get:
+      tags: [Permission Management]
+      summary: Get all permissions
+      responses:
+        '200':
+          description: List of permissions
+    post:
+      tags: [Permission Management]
+      summary: Create a permission
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Permission'
+      responses:
+        '201':
+          description: Permission created
+
+  /permissions/{permissionId}/roles:
+    post:
+      tags: [Permission Management]
+      summary: Map permission to roles
+      parameters:
+        - in: path
+          name: permissionId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        '200':
+          description: Roles mapped
+
+  /program-types:
+    get:
+      tags: [Program Type Management]
+      summary: Get all program types
+      responses:
+        '200':
+          description: List of program types
+    post:
+      tags: [Program Type Management]
+      summary: Create a program type
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramType'
+      responses:
+        '201':
+          description: Program type created
+
+  /regions:
+    get:
+      tags: [Stellantis Regions Management]
+      summary: Get all regions
+      responses:
+        '200':
+          description: List of regions
+    post:
+      tags: [Stellantis Regions Management]
+      summary: Create a region
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Region'
+      responses:
+        '201':
+          description: Region created
+
+  /activities:
+    get:
+      tags: [Activity Management]
+      summary: Get all activities
+      responses:
+        '200':
+          description: List of activities
+    post:
+      tags: [Activity Management]
+      summary: Create an activity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activity'
+      responses:
+        '201':
+          description: Activity created
+
+  /templates:
+    get:
+      tags: [Template Management]
+      summary: Get all templates
+      responses:
+        '200':
+          description: List of templates
+    post:
+      tags: [Template Management]
+      summary: Create a template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Template'
+      responses:
+        '201':
+          description: Template created
+
+  /ryg-rules:
+    get:
+      tags: [RYG Rule Management]
+      summary: Get all RYG rules
+      responses:
+        '200':
+          description: List of RYG rules
+    post:
+      tags: [RYG Rule Management]
+      summary: Define a new RYG rule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RYGRule'
+      responses:
+        '201':
+          description: RYG rule created
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+
+    ProgramType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        programType:
+          type: string
+
+    RYGRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        condition:
+          type: string
